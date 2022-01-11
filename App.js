@@ -17,7 +17,6 @@ import LoveQuotes from './screens/love/loveQuotes';
 import Home from './screens/home';
 
 import QuotesHome from './screens/quotes/quotesHome';
-import { StrictMode } from 'react/cjs/react.production.min';
 
 ///////////////////////////
 
