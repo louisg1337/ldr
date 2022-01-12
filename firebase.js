@@ -1,9 +1,10 @@
-// Import the functions you need from the SDKs you need
 import { useState, useEffect} from "react"
 import { initializeApp } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, updateProfile, signOut } from "firebase/auth";
 import { storeData } from "./asyncStorage";
-import { getFirestore, doc, setDoc, deleteDoc, getDoc, updateDoc } from "firebase/firestore";
+import { getFirestore, doc, setDoc, deleteDoc, getDoc, updateDoc, query, collection, where, arrayUnion, getDocs, deleteField } from "firebase/firestore";
+import 'react-native-get-random-values'
+import { customAlphabet } from 'nanoid'
 
 const firebaseConfig = {
   apiKey: "AIzaSyAih5h2CCYZgs84OVpQzff_SQMLMwGt2DE",
@@ -15,19 +16,16 @@ const firebaseConfig = {
   measurementId: "G-BEHHKXV8ZQ"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const auth = getAuth();
+export const auth = getAuth();
 
-// Auth Signup
+////////////////////////////////
+///////////// AUTH /////////////
+////////////////////////////////
+
 export function signUp(email, password, name) {
   createUserWithEmailAndPassword(auth, email, password).then(async (cred) => {
-    const newUser = {
-      uid: auth.currentUser.uid,
-      relationship: null,
-      displayName: name,
-    }
-    await storeData('user', newUser)
+    await saveUserData(auth.currentUser.uid, name)
     updateProfile(auth.currentUser, {
       displayName: name
     }).catch(error => console.log(error))
@@ -36,12 +34,31 @@ export function signUp(email, password, name) {
   })
 }
 
-// Auth Signin
-export function signIn(email, password) {
-  return signInWithEmailAndPassword(auth, email, password);
+const saveUserData = async (uid, name) => {
+  const nanoid = customAlphabet('123456789ABCDEFGHIJKLMNPQRSTUVWXYZ', 8)
+  const newUser = {
+    relationship: false,
+    relationshipID: nanoid(),
+    request: [],
+    displayName: name,
+  }
+  await storeData('user', {...newUser, id: uid})
+  await addDatabase('users', uid, newUser)
 }
 
-// Manage User
+export function signIn(email, password) {
+  signInWithEmailAndPassword(auth, email, password).then((cred) => {
+      retrieveDatabase('users', auth.currentUser.uid).then((snap) => {
+      signInStoreData(snap, auth.currentUser.uid)
+    })
+  })
+}
+
+const signInStoreData = async (data, uid) => {
+  await storeData('user', {...data, id: uid})
+}
+
+
 export function manageUser() {
   const [currentUser, setCurrentUser] = useState();
   useEffect(() => {
@@ -52,12 +69,9 @@ export function manageUser() {
   return currentUser;
 }
 
-// Auth SignOut
-
 export function signUserOut() {
   return signOut(auth);
 }
-
 
 ////////////////////////////////
 ////////// CLOUDSTORE //////////
@@ -82,7 +96,7 @@ export const retrieveDatabase = async (collection, document) => {
     if (snap.exists()) {
       return snap.data()
     } else {
-      console.log('No data found!')
+      return null
     }
   } catch (e) {
     console.log(e)
@@ -101,11 +115,37 @@ export const updateDatabase = async (collection, document, field, data) => {
   }
 }
 
-export const deleteDatabase = async (collection, document) => {
+export const updateDatabaseArray = async (collection, document, field, data) => {
+  const ref = doc(db, collection, document)
   try {
-    await deleteDoc(doc(db, collection, document))
+    await updateDoc(ref, {
+      [field]: arrayUnion(data)
+    })
+    console.log("Data successfully updated!")
+  } catch (e) {
+    console.log(e)
+  }
+}
+
+export const deleteDatabaseField = async (collection, document, field) => {
+  try {
+    const ref = doc(db, collection, document)
+    await updateDoc(ref, {
+      [field]: deleteField()
+    })
     console.log("Data successfully deleted!")
   } catch (e) {
     console.log(e)
   }
+}
+
+export const queryDatabase = async (document, subCollection, find) => {
+  const q = query(collection(db, document), where(subCollection, "==", find));
+  const snap = await getDocs(q);
+  let newData = []
+  snap.forEach((doc) => {
+    let temp = [doc.data(), doc.id]
+    newData.push(temp)
+  });
+  return newData
 }
