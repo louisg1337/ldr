@@ -13,7 +13,7 @@ export default function UserSetup({ navigation }) {
 
   useEffect(async () => {
     setTimeout(async () => {
-      console.log('refreshed!')
+      // Get async storage data on user
       await getData('user').then(async (val) => {
         setUser(val)
         if (val.relationship) {
@@ -21,6 +21,7 @@ export default function UserSetup({ navigation }) {
           navigation.replace('Main')
           return;
         }
+        // Get requests from firebase
         await retrieveDatabase('users', val.id).then(async (snap) => {
           if (snap.relationship){
             console.log('Checked + found FIREBASE')
@@ -35,16 +36,14 @@ export default function UserSetup({ navigation }) {
     }, 500)
   }, [])
 
-  // Search for user in database
+  // Search for user in database, if found add to each users' requests
   const search = async () => {
     await queryDatabase('users', 'relationshipID', id).then(async (val) => {
       if (val.length === 0){
         alert('User not found!')
       } else {
         if (val[0][0].relationshipID != user.relationshipID && !(val[0][0].relationship)){
-          // Add to current user firebase
           await updateDatabaseArray('users', user.id, 'request', {name: val[0][0].displayName, type: 'S', relID: val[0][0].relationshipID, id: val[0][1]})
-          // Add to other user firebase
           await updateDatabaseArray('users', val[0][1], 'request', {name: user.displayName, type: 'R', relID: user.relationshipID, id: user.id})
         } else {
           alert('User not available!')
@@ -63,7 +62,7 @@ export default function UserSetup({ navigation }) {
     await updateDatabase('users', user.id, 'relationship', newID);
     await updateDatabase('users', request[index].id, 'relationship', newID);
 
-    // Create new relationship with both ID's in it
+    // Create new relationship with both ID's + names in it
     const newRelationship = {
       userOne: [user.displayName, user.id], 
       userTwo: [request[index].name, request[index].id]
@@ -78,9 +77,9 @@ export default function UserSetup({ navigation }) {
     await updateAsync(user)
 
     navigation.replace('Main')
-    
   }
 
+  // Update user data async storage
   const updateAsync = async (userInfo) => {
     console.log(userInfo)
     const newData = userInfo

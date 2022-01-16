@@ -34,6 +34,7 @@ export function signUp(email, password, name) {
   })
 }
 
+// Helper function for signup
 const saveUserData = async (uid, name) => {
   const nanoid = customAlphabet('123456789ABCDEFGHIJKLMNPQRSTUVWXYZ', 8)
   const newUser = {
@@ -54,6 +55,7 @@ export function signIn(email, password) {
   })
 }
 
+// Helper function for signin
 const signInStoreData = async (data, uid) => {
   await storeData('user', {...data, id: uid})
 }

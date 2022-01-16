@@ -1,5 +1,4 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useState, useEffect } from 'react'
 
 export const storeData = async (key, value) => {
     try {
@@ -20,14 +19,4 @@ export const getData = async (key) => {
       console.log('Get Data Failure')
       console.log(e)
     }
-  }
-
-export const trackRelationship = async () => {
-    const [currentRel, setCurrentRel] = useState();
-    useEffect(() => {
-        const unsub = getData('user').then(val => setCurrentRel(val.relationship))
-        return unsub;
-    }, []);
-    
-    return currentRel;
 }
