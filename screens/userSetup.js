@@ -10,14 +10,17 @@ export default function UserSetup({ navigation }) {
   const [user, setUser] = useState();
   const [id, setId] = useState();
   const [request, setRequest] = useState();
+  const [refresh, setRefresh] = useState(true);
 
   useEffect(async () => {
     setTimeout(async () => {
       // Get async storage data on user
       await getData('user').then(async (val) => {
         setUser(val)
+        console.log('///// USER SETUP //////')
+        console.log(val)
         if (val.relationship) {
-          console.log('Checked + found ASYNC')
+          console.log('Checked + foun  d ASYNC')
           navigation.replace('Main')
           return;
         }
@@ -25,16 +28,19 @@ export default function UserSetup({ navigation }) {
         await retrieveDatabase('users', val.id).then(async (snap) => {
           if (snap.relationship){
             console.log('Checked + found FIREBASE')
-            await updateAsync(val)
-            navigation.replace('Main')
+            let newData = val
+            newData['relationship'] = snap.relationship
+            console.log(newData)
+            await storeData('user', val);
+            // navigation.replace('Main')
             return;
           }
           setRequest(snap.request)
-          isLoading(false)
+          setTimeout(() => {isLoading(false)}, 300);
         })
       })
     }, 500)
-  }, [])
+  }, [refresh])
 
   // Search for user in database, if found add to each users' requests
   const search = async () => {
@@ -45,6 +51,7 @@ export default function UserSetup({ navigation }) {
         if (val[0][0].relationshipID != user.relationshipID && !(val[0][0].relationship)){
           await updateDatabaseArray('users', user.id, 'request', {name: val[0][0].displayName, type: 'S', relID: val[0][0].relationshipID, id: val[0][1]})
           await updateDatabaseArray('users', val[0][1], 'request', {name: user.displayName, type: 'R', relID: user.relationshipID, id: user.id})
+          setRefresh(!refresh)
         } else {
           alert('User not available!')
         }
@@ -62,6 +69,11 @@ export default function UserSetup({ navigation }) {
     await updateDatabase('users', user.id, 'relationship', newID);
     await updateDatabase('users', request[index].id, 'relationship', newID);
 
+    // Update async
+    let newData = user
+    newData['relationship'] = newID
+    await storeData('user', newData);
+
     // Create new relationship with both ID's + names in it
     const newRelationship = {
       userOne: [user.displayName, user.id], 
@@ -73,18 +85,8 @@ export default function UserSetup({ navigation }) {
     await deleteDatabaseField('users', user.id, 'request')
     await deleteDatabaseField('users', request[index].id, 'request')
 
-    // Update async
-    await updateAsync(user)
 
     navigation.replace('Main')
-  }
-
-  // Update user data async storage
-  const updateAsync = async (userInfo) => {
-    console.log(userInfo)
-    const newData = userInfo
-    newData.relationship = true
-    await storeData('user', newData);
   }
 
   if (loading) {
@@ -132,6 +134,7 @@ export default function UserSetup({ navigation }) {
             }
           </View>
           <Button title="Sign Out" onPress={() => signUserOut()}/>
+          <Button title="Refresh" onPress={() => setRefresh(!refresh)}/>
         </View>
       </TouchableWithoutFeedback>
     );

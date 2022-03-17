@@ -1,28 +1,5 @@
-1/12
-
-- Make Request Functional
-    - Make request viewable
-        - Add a refresh
-        - Add a check 
-    - Save data for both sender + receipient (ASYNC? + FIREBASE)
-        - [id, 'r'], R-receipient, S-sender, A-accepted
-    - If accepted, change both relationship to true
-        
-THOUGHTS:
-- Data Flow
-    - Option 1
-        - Check firebase for relationship data, retrieve it and save it to async storage
-
-1/13
-- Home Screen
-    - Create timer to see person
-        - Add to firebase family
-
-1/15
-- Add timer info to firebase family
-    - Make it so when no timer, returns 0
-    - When changing date, update state
-        - When unmount, save to async and firebase
+1/16
 - Explore push notifications
     - Basic implementation if possible 
+- Add sending notification possibility on love screen
 

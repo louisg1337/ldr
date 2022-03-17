@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import { useFonts } from 'expo-font';
 import { signUserOut, retrieveDatabase, updateDatabase } from '../firebase';
 import { getData, storeData } from '../asyncStorage';
-
+import { registerForPushNotificationsAsync } from '../pushNotification';
 
 export default function Home({ navigation }) {
   const [loading, isLoading] = useState(true);
@@ -20,42 +20,40 @@ export default function Home({ navigation }) {
   const [days, setDays] = useState(0);
   const [refresh, setRefresh] = useState(true)
  
-  useEffect(async () => {
-    await initData()
-    console.log('////////////// DATA ////////////////')
+  useEffect(() => {
+    console.log('////////////// HOME SCREEN ////////////////')
+    initData().then(() => isLoading(false))
+
   }, [])
 
   useEffect(() => {
-    const unsub = navigation.addListener('blur', () => {
+    const unsub = navigation.addListener('blur', async () => {
       console.log('blurred!')
       console.log('//////////////////////')
       blurred(date, relationship)
     })
 
-    return unsub
+    return () => unsub
   }, [navigation, date])
 
   useEffect(() => {
     countdown()
-    setTimeout(() => {setRefresh(!refresh)}, 1000)
+    let timer = setTimeout(() => {setRefresh(!refresh)}, 1000)
+    return () => { clearTimeout(timer) }
   }, [refresh])
 
   // Add timer data to database + async when blurred
   const blurred = async (d, r) => {
-    // Check if date changed
-    if ((d === false && typeof r.date == 'undefined') || d === r.date) {
-      console.log('No change to timer!')
-      return;
-    } else {
-      // If changed, add to async
-      let newRel = r
-      newRel['date'] = d
-      console.log(newRel)
-      setRelationship(newRel)
-      await storeData('relationship', newRel)
-      // update database
-      await updateDatabase('relationships', user.relationship, 'date', d)
-    }
+    console.log(r)
+    // if ((d === false && r.date === false) || d === r.date) {
+    //   console.log('No change to timer!')
+    // } else {
+    //   let newRel = r
+    //   newRel['date'] = d
+    //   setRelationship(newRel)
+    //   await storeData('relationship', newRel)
+    //   await updateDatabase('relationships', user.relationship, 'date', d)
+    // }
   }
 
   // Load in fonts
@@ -74,10 +72,15 @@ export default function Home({ navigation }) {
           console.log('Found date!')
           setDate(rel.date)
         } else {
+          let temp = rel
+          temp['date'] = false
+          setRelationship(temp)
           setDate(false)
         }
-        isLoading(false)
-      })
+        // if user does not have expo token, 
+
+        // registerForPushNotificationsAsync(snap, relationship)
+      }).catch(e => console.log(e))
     }).catch((e) => console.log(e))
   }
 
@@ -126,14 +129,6 @@ export default function Home({ navigation }) {
       await signUserOut()
     } catch (error) {
       alert(error)
-    }
-  }
-
-  const test = async () => {
-    try {
-      await getData('user').then((val) => console.log(val))
-    } catch (e) {
-      console.log(e)
     }
   }
 

@@ -5,15 +5,16 @@ import { storeData } from "./asyncStorage";
 import { getFirestore, doc, setDoc, deleteDoc, getDoc, updateDoc, query, collection, where, arrayUnion, getDocs, deleteField } from "firebase/firestore";
 import 'react-native-get-random-values'
 import { customAlphabet } from 'nanoid'
+var env = require('dotenv').config();
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAih5h2CCYZgs84OVpQzff_SQMLMwGt2DE",
-  authDomain: "long-distance-realtionship.firebaseapp.com",
-  projectId: "long-distance-realtionship",
-  storageBucket: "long-distance-realtionship.appspot.com",
-  messagingSenderId: "579752201284",
-  appId: "1:579752201284:web:e5ba00af1ae63bdc068011",
-  measurementId: "G-BEHHKXV8ZQ"
+  apiKey: process.env.API_KEY,
+  authDomain: process.env.AUTH_DOMAIN,
+  projectId: process.env.PROJECT_ID,
+  storageBucket: process.env.BUCKET,
+  messagingSenderId: process.env.MESSAGE,
+  appId: process.env.ID,
+  measurementId: process.env.MEASUREMENT
 };
 
 const app = initializeApp(firebaseConfig);
